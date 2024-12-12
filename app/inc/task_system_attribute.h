@@ -89,7 +89,7 @@ typedef struct
 	uint32_t			tick;
 	uint32_t			speed;
 	uint32_t			qty_packs;
-	uint32_t			packs_change_speed;
+	uint32_t			pack_rate;
 	uint32_t			waiting_time;
 	uint32_t			option;
 	task_system_st_t	state;

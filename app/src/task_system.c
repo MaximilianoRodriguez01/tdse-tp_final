@@ -39,6 +39,7 @@
 /********************** inclusions *******************************************/
 /* Project includes. */
 #include "main.h"
+#include "string.h"
 
 /* Demo includes. */
 #include "logger.h"
@@ -51,6 +52,7 @@
 #include "task_system_interface.h"
 #include "task_actuator_attribute.h"
 #include "task_actuator_interface.h"
+#include "display.h"
 
 /********************** macros and definitions *******************************/
 #define G_TASK_SYS_CNT_INI			0ul
@@ -169,6 +171,11 @@ void task_system_update(void *parameters)
 		{
 			case ST_SYST_IDLE:
 
+				displayCharPositionWrite(0, 0);
+				displayStringWrite("CONTROL SYST OFF");
+				displayCharPositionWrite(1, 0);
+				displayStringWrite("PRESS BUTTON 1  ");
+
 				put_event_task_actuator(EV_LED_XX_TURN_ON, ID_LED_CTRL_SYST);
 
 				if (EV_SYST_CTRL_ON == p_task_system_dta->event)
@@ -177,7 +184,7 @@ void task_system_update(void *parameters)
 					put_event_task_actuator(EV_LED_XX_BLINKING_OFF, ID_BUZZER);
 					p_task_system_dta->state = ST_SYST_CTRL;
 					p_task_system_dta->speed = DEL_SYST_INIT_SPEED;
-					p_task_system_dta->packs_change_speed = DEL_SYST_INIT_PCS;
+					p_task_system_dta->pack_rate = DEL_SYST_INIT_PCS;
 					p_task_system_dta->waiting_time = DEL_SYST_INIT_WAITING_TIME;
 				}
 
@@ -186,7 +193,7 @@ void task_system_update(void *parameters)
 					put_event_task_actuator(EV_LED_XX_BLINKING_OFF, ID_BUZZER);
 					p_task_system_dta->state = ST_SYST_SETUP;
 					p_task_system_dta->speed = DEL_SYST_INIT_SPEED;
-					p_task_system_dta->packs_change_speed = DEL_SYST_INIT_PCS;
+					p_task_system_dta->pack_rate = DEL_SYST_INIT_PCS;
 					p_task_system_dta->waiting_time = DEL_SYST_INIT_WAITING_TIME;
 					p_task_system_dta->option = DEL_SYST_INIT_OPTION;
 				}
@@ -194,6 +201,16 @@ void task_system_update(void *parameters)
 				break;
 
 			case ST_SYST_CTRL:
+
+				displayCharPositionWrite(0, 0);
+				char str1[20];
+				// snprintf(str1, sizeof(str1), "S:%i P:%i T:%i°C", p_task_system_dta->speed, p_task_system_dta->qty_packs, );
+				displayStringWrite(str1);
+
+				displayCharPositionWrite(1, 0);
+				char str2[20];
+				snprintf(str2, sizeof(str2), "WT:%i PR:%i     ", (int)p_task_system_dta->waiting_time, (int)p_task_system_dta->pack_rate);
+				displayStringWrite(str2);
 
 				if (p_task_system_dta->qty_packs == DEL_SYST_MIN)
 				{
@@ -210,7 +227,7 @@ void task_system_update(void *parameters)
 					p_task_system_dta->qty_packs++;
 				}
 
-				if (EV_SYST_PACK_IN == p_task_system_dta->event && (p_task_system_dta->qty_packs % p_task_system_dta->packs_change_speed) == 0 && p_task_system_dta->speed > DEL_SYST_MIN_SPEED && p_task_system_dta->qty_packs < DEL_SYST_MAX_PACKS)
+				if (EV_SYST_PACK_IN == p_task_system_dta->event && (p_task_system_dta->qty_packs % p_task_system_dta->pack_rate) == 0 && p_task_system_dta->speed > DEL_SYST_MIN_SPEED && p_task_system_dta->qty_packs < DEL_SYST_MAX_PACKS)
 				{
 					p_task_system_dta->speed--;
 					put_event_task_actuator(EV_LED_XX_TURN_OFF, ID_LED_MAX_SPEED);
@@ -233,7 +250,7 @@ void task_system_update(void *parameters)
 					p_task_system_dta->qty_packs--;
 				}
 
-				if (EV_SYST_PACK_OUT == p_task_system_dta->event && (p_task_system_dta->qty_packs % p_task_system_dta->packs_change_speed) == 0 && p_task_system_dta->speed < DEL_SYST_MAX_SPEED && p_task_system_dta->qty_packs > DEL_SYST_MIN)
+				if (EV_SYST_PACK_OUT == p_task_system_dta->event && (p_task_system_dta->qty_packs % p_task_system_dta->pack_rate) == 0 && p_task_system_dta->speed < DEL_SYST_MAX_SPEED && p_task_system_dta->qty_packs > DEL_SYST_MIN)
 				{
 					p_task_system_dta->speed++;
 					put_event_task_actuator(EV_LED_XX_TURN_OFF, ID_LED_MIN_SPEED);
@@ -251,7 +268,7 @@ void task_system_update(void *parameters)
 					p_task_system_dta->state = ST_SYST_IDLE;
 					p_task_system_dta->qty_packs = DEL_SYST_MIN;
 					p_task_system_dta->speed = DEL_SYST_MIN;
-					p_task_system_dta->packs_change_speed = DEL_SYST_MIN;
+					p_task_system_dta->pack_rate = DEL_SYST_MIN;
 					p_task_system_dta->waiting_time = DEL_SYST_MIN;
 					p_task_system_dta->tick = DEL_SYST_MIN;
 				}
@@ -263,6 +280,13 @@ void task_system_update(void *parameters)
 				switch (p_task_system_dta->composed_state)
 				{
 					case ST_SETUP_INIT_MENU:
+
+						displayCharPositionWrite(0, 0);
+						displayStringWrite("PACKS-TIME (1-2)");
+						displayCharPositionWrite(0, 1);
+						char str_option[20];
+						snprintf(str_option, sizeof(str_option), "OPTION: %i         ", (int)p_task_system_dta->option);
+						displayStringWrite(str_option);
 
 						if (EV_SETUP_NEXT == p_task_system_dta->event && p_task_system_dta->option == 1)
 						{
@@ -278,7 +302,7 @@ void task_system_update(void *parameters)
 
 						if (EV_SETUP_ENTER == p_task_system_dta->event && p_task_system_dta->option == 1)
 						{
-							p_task_system_dta->composed_state = ST_SETUP_MENU_PACKS_LIM;
+							p_task_system_dta->composed_state = ST_SETUP_MENU_pack_rate;
 							break;
 						}
 
@@ -290,16 +314,23 @@ void task_system_update(void *parameters)
 
 						break;
 
-					case ST_SETUP_MENU_PACKS_LIM:
+					case ST_SETUP_MENU_pack_rate:
 
-						if (EV_SETUP_NEXT == p_task_system_dta->event && p_task_system_dta->packs_change_speed < DEL_SYST_MAX_PACKS)
+						displayCharPositionWrite(0, 0);
+						displayStringWrite("SET PACK RATE   ");
+						displayCharPositionWrite(0, 1);
+						char str_pack_rate[20];
+						snprintf(str_pack_rate, sizeof(str_pack_rate), "LIM RATE: %i    ", (int)p_task_system_dta->pack_rate);
+						displayStringWrite(str_pack_rate);
+
+						if (EV_SETUP_NEXT == p_task_system_dta->event && p_task_system_dta->pack_rate < DEL_SYST_MAX_PACKS)
 						{
-							p_task_system_dta->packs_change_speed++;
+							p_task_system_dta->pack_rate++;
 						}
 
-						if (EV_SETUP_NEXT == p_task_system_dta->event && p_task_system_dta->packs_change_speed == DEL_SYST_MAX_PACKS)
+						if (EV_SETUP_NEXT == p_task_system_dta->event && p_task_system_dta->pack_rate == DEL_SYST_MAX_PACKS)
 						{
-							p_task_system_dta->packs_change_speed = 1;
+							p_task_system_dta->pack_rate = 1;
 						}
 
 						if (EV_SETUP_ESCAPE == p_task_system_dta->event)
@@ -311,6 +342,13 @@ void task_system_update(void *parameters)
 						break;
 
 					case ST_SETUP_MENU_WAITING_TIME:
+
+						displayCharPositionWrite(0, 0);
+						displayStringWrite("SET WAITING TIME");
+						displayCharPositionWrite(0, 1);
+						char str_waiting_time[20];
+						snprintf(str_waiting_time, sizeof(str_waiting_time), "WAIT TIME: %i   ", (int)p_task_system_dta->pack_rate);
+						displayStringWrite(str_waiting_time);
 
 						if (EV_SETUP_NEXT == p_task_system_dta->event)
 						{
