@@ -62,10 +62,12 @@ extern "C" {
  */
 
 /* Events to excite Task System */
-typedef enum task_system_ev {EV_SYST_CTRL_ON,
+typedef enum task_system_ev {EV_SYST_IDLE,
+							 EV_SYST_CTRL_ON,
 							 EV_SYST_CTRL_OFF,
 							 EV_SYST_PACK_IN,
 							 EV_SYST_PACK_OUT,
+							 EV_SYST_NO_PACKS,
 							 EV_SYST_SETUP_ON,
 							 EV_SYST_SETUP_OFF,
 							 EV_SETUP_ENTER,
@@ -75,10 +77,12 @@ typedef enum task_system_ev {EV_SYST_CTRL_ON,
 /* State of Task System */
 typedef enum task_system_st {ST_SYST_IDLE,
 							 ST_SYST_CTRL,
-							 ST_SYST_SETUP,
-							 ST_SETUP_INIT_MENU,
-							 ST_SETUP_MENU_PACKS_LIM,
-							 ST_SETUP_MENU_WAITING_TIME} task_system_st_t;
+							 ST_SYST_SETUP} task_system_st_t;
+
+/* Composed State of Task System */
+typedef enum task_system_composed_st {ST_SETUP_INIT_MENU,
+	 	 	 	 	 	 	 	 	  ST_SETUP_MENU_PACKS_LIM,
+									  ST_SETUP_MENU_WAITING_TIME} task_system_composed_st_t;
 
 typedef struct
 {
@@ -89,7 +93,7 @@ typedef struct
 	uint32_t			waiting_time;
 	uint32_t			option;
 	task_system_st_t	state;
-	task_system_st_t	composed_state;
+	task_system_composed_st_t	composed_state;
 	task_system_ev_t	event;
 	bool				flag;
 } task_system_dta_t;

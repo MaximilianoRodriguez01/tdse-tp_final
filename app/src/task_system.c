@@ -58,15 +58,16 @@
 
 #define DEL_SYST_MIN	 			0ul
 #define DEL_SYST_MIN_WAITING_TIME	1ul
+#define DEL_SYST_MIN_SPEED          1ul
 
-#define DEL_SYST_INIT_SPEED			20ul
+#define DEL_SYST_INIT_SPEED			10ul
 #define DEL_SYST_INIT_PCS			1ul
 #define DEL_SYST_INIT_WAITING_TIME	5ul
 #define DEL_SYST_INIT_OPTION		1ul
 
 #define DEL_SYST_MAX_PACKS			10ul
-#define DEL_SYST_MAX_SPEED			40ul
-#define DEL_SYST_MAX_WAITING_TIME	50ul
+#define DEL_SYST_MAX_SPEED			20ul
+#define DEL_SYST_MAX_WAITING_TIME	30ul
 
 /********************** internal data declaration ****************************/
 task_system_dta_t task_system_dta =
@@ -87,11 +88,11 @@ volatile uint32_t g_task_system_tick_cnt;
 /********************** external functions definition ************************/
 void task_system_init(void *parameters)
 {
-	task_system_dta_t 	*p_task_system_dta;
-	task_system_st_t	state;
-	task_system_st_t	composed_state;
-	task_system_ev_t	event;
-	bool b_event;
+	task_system_dta_t 			*p_task_system_dta;
+	task_system_st_t			state;
+	task_system_composed_st_t	composed_state;
+	task_system_ev_t			event;
+	bool 						b_event;
 
 	/* Print out: Task Initialized */
 	LOGGER_LOG("  %s is running - %s\r\n", GET_NAME(task_system_init), p_task_system);
@@ -111,7 +112,7 @@ void task_system_init(void *parameters)
 	state = p_task_system_dta->state;
 	LOGGER_LOG("   %s = %lu", GET_NAME(state), (uint32_t)state);
 
-	compose_state = p_task_system_dta->composed_state;
+	composed_state = p_task_system_dta->composed_state;
 	LOGGER_LOG("   %s = %lu", GET_NAME(composed_state), (uint32_t)composed_state);
 
 	event = p_task_system_dta->event;
@@ -168,9 +169,12 @@ void task_system_update(void *parameters)
 		{
 			case ST_SYST_IDLE:
 
+				put_event_task_actuator(EV_LED_XX_TURN_ON, ID_LED_CTRL_SYST);
+
 				if (EV_SYST_CTRL_ON == p_task_system_dta->event)
 				{
-					// put_event_task_actuator(EV_LED_01_TURN_ON, ID_LED_B);
+					put_event_task_actuator(EV_LED_XX_BLINKING_ON, ID_LED_CTRL_SYST);
+					put_event_task_actuator(EV_LED_XX_BLINKING_OFF, ID_BUZZER);
 					p_task_system_dta->state = ST_SYST_CTRL;
 					p_task_system_dta->speed = DEL_SYST_INIT_SPEED;
 					p_task_system_dta->packs_change_speed = DEL_SYST_INIT_PCS;
@@ -179,6 +183,7 @@ void task_system_update(void *parameters)
 
 				if (EV_SYST_SETUP_ON == p_task_system_dta->event)
 				{
+					put_event_task_actuator(EV_LED_XX_BLINKING_OFF, ID_BUZZER);
 					p_task_system_dta->state = ST_SYST_SETUP;
 					p_task_system_dta->speed = DEL_SYST_INIT_SPEED;
 					p_task_system_dta->packs_change_speed = DEL_SYST_INIT_PCS;
@@ -190,25 +195,35 @@ void task_system_update(void *parameters)
 
 			case ST_SYST_CTRL:
 
+				if (p_task_system_dta->qty_packs == DEL_SYST_MIN)
+				{
+					put_event_task_actuator(EV_LED_XX_TURN_ON, ID_LED_MIN_SPEED);
+				}
+
+				if (p_task_system_dta->qty_packs == DEL_SYST_MAX_PACKS)
+				{
+					put_event_task_actuator(EV_LED_XX_TURN_ON, ID_LED_MAX_SPEED);
+				}
+
 				if (EV_SYST_PACK_IN == p_task_system_dta->event && p_task_system_dta->qty_packs < DEL_SYST_MAX_PACKS)
 				{
-					// put_event_task_actuator(EV_LED_01_TURN_OFF, ID_LED_B);
-					// put_event_task_actuator(EV_LED_01_BLINKING_ON, ID_LED_C);
 					p_task_system_dta->qty_packs++;
 				}
 
-				if (EV_SYST_PACK_IN == p_task_system_dta->event && (p_task_system_dta->qty_packs % p_task_system_dta->packs_change_speed) == 0 && p_task_system_dta->speed > DEL_SYST_MIN && p_task_system_dta->qty_packs < DEL_SYST_MAX_PACKS)
+				if (EV_SYST_PACK_IN == p_task_system_dta->event && (p_task_system_dta->qty_packs % p_task_system_dta->packs_change_speed) == 0 && p_task_system_dta->speed > DEL_SYST_MIN_SPEED && p_task_system_dta->qty_packs < DEL_SYST_MAX_PACKS)
 				{
 					p_task_system_dta->speed--;
+					put_event_task_actuator(EV_LED_XX_TURN_OFF, ID_LED_MAX_SPEED);
 					p_task_system_dta->qty_packs++;
 				}
 
-				if (p_task_system_dta->tick == p_task_system_dta->waiting_time && p_task_system_dta->qty_packs == DEL_SYST_MIN)
+				if (EV_SYST_NO_PACKS == p_task_system_dta->event && p_task_system_dta->tick == p_task_system_dta->waiting_time && p_task_system_dta->qty_packs == DEL_SYST_MIN)
 				{
+					put_event_task_actuator(EV_LED_XX_BLINKING_ON, ID_BUZZER);
 					put_event_task_system(EV_SYST_CTRL_OFF);
 				}
 
-				if (p_task_system_dta->qty_packs == DEL_SYST_MIN)
+				if (EV_SYST_NO_PACKS == p_task_system_dta->event && p_task_system_dta->qty_packs == DEL_SYST_MIN)
 				{
 					p_task_system_dta->tick++;
 				}
@@ -221,6 +236,7 @@ void task_system_update(void *parameters)
 				if (EV_SYST_PACK_OUT == p_task_system_dta->event && (p_task_system_dta->qty_packs % p_task_system_dta->packs_change_speed) == 0 && p_task_system_dta->speed < DEL_SYST_MAX_SPEED && p_task_system_dta->qty_packs > DEL_SYST_MIN)
 				{
 					p_task_system_dta->speed++;
+					put_event_task_actuator(EV_LED_XX_TURN_OFF, ID_LED_MIN_SPEED);
 					p_task_system_dta->qty_packs--;
 				}
 
@@ -308,8 +324,6 @@ void task_system_update(void *parameters)
 
 						break;
 				}
-
-				break;
 		}
     }
 }

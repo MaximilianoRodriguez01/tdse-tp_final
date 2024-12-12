@@ -88,13 +88,11 @@ typedef enum task_sensor_st {ST_BTN_XX_UP,
 						     ST_BTN_XX_INCREASING} task_sensor_st_t;
 
 /* Identifier of Task Sensor */
-typedef enum task_sensor_id {ID_BTN_A,
-							 ID_BTN_PACK_IN,
+typedef enum task_sensor_id {ID_BTN_PACK_IN,
 							 ID_BTN_PACK_OUT,
-							 ID_BTN_CTRL_SYST_ON,
 							 ID_DIP_NORMAL_OR_SETUP,
 							 ID_DIP_INFRARED,
-							 ID_DIP_CTRL_SYST_OFF,
+							 ID_DIP_CTRL_SYST_ON,
 							 ID_BTN_ENTER,
 							 ID_BTN_NEXT,
 							 ID_BTN_ESCAPE} task_sensor_id_t;
