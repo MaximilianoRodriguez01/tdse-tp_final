@@ -52,6 +52,7 @@
 #include "task_system_interface.h"
 #include "task_actuator_attribute.h"
 #include "task_actuator_interface.h"
+#include "task_temperature.h"
 #include "display.h"
 
 /********************** macros and definitions *******************************/
@@ -88,8 +89,7 @@ uint32_t g_task_system_cnt;
 volatile uint32_t g_task_system_tick_cnt;
 
 /********************** external functions definition ************************/
-void task_system_init(void *parameters)
-{
+void task_system_init(void *parameters) {
 	task_system_dta_t 			*p_task_system_dta;
 	task_system_st_t			state;
 	task_system_composed_st_t	composed_state;
@@ -128,8 +128,7 @@ void task_system_init(void *parameters)
 	displayInit();
 }
 
-void task_system_update(void *parameters)
-{
+void task_system_update(void *parameters) {
 	task_system_dta_t *p_task_system_dta;
 	bool b_time_update_required = false;
 
@@ -138,24 +137,20 @@ void task_system_update(void *parameters)
 
 	/* Protect shared resource (g_task_system_tick) */
 	__asm("CPSID i");	/* disable interrupts*/
-    if (G_TASK_SYS_TICK_CNT_INI < g_task_system_tick_cnt)
-    {
+    if (G_TASK_SYS_TICK_CNT_INI < g_task_system_tick_cnt) {
     	g_task_system_tick_cnt--;
     	b_time_update_required = true;
     }
     __asm("CPSIE i");	/* enable interrupts*/
 
-    while (b_time_update_required)
-    {
+    while (b_time_update_required) {
 		/* Protect shared resource (g_task_system_tick) */
 		__asm("CPSID i");	/* disable interrupts*/
-		if (G_TASK_SYS_TICK_CNT_INI < g_task_system_tick_cnt)
-		{
+		if (G_TASK_SYS_TICK_CNT_INI < g_task_system_tick_cnt) {
 			g_task_system_tick_cnt--;
 			b_time_update_required = true;
 		}
-		else
-		{
+		else {
 			b_time_update_required = false;
 		}
 		__asm("CPSIE i");	/* enable interrupts*/
@@ -163,14 +158,13 @@ void task_system_update(void *parameters)
     	/* Update Task System Data Pointer */
 		p_task_system_dta = &task_system_dta;
 
-		if (true == any_event_task_system())
-		{
+		if (true == any_event_task_system()) {
 			p_task_system_dta->flag = true;
 			p_task_system_dta->event = get_event_task_system();
 		}
 
-		switch (p_task_system_dta->state)
-		{
+		switch (p_task_system_dta->state) {
+
 			case ST_SYST_IDLE:
 
 				displayCharPositionWrite(0, 0);
@@ -180,8 +174,7 @@ void task_system_update(void *parameters)
 
 				put_event_task_actuator(EV_LED_XX_TURN_ON, ID_LED_CTRL_SYST);
 
-				if (EV_SYST_CTRL_ON == p_task_system_dta->event)
-				{
+				if (EV_SYST_CTRL_ON == p_task_system_dta->event) {
 					put_event_task_actuator(EV_LED_XX_BLINKING_ON, ID_LED_CTRL_SYST);
 					put_event_task_actuator(EV_LED_XX_BLINKING_OFF, ID_BUZZER);
 					p_task_system_dta->state = ST_SYST_CTRL;
@@ -190,8 +183,7 @@ void task_system_update(void *parameters)
 					p_task_system_dta->waiting_time = DEL_SYST_INIT_WAITING_TIME;
 				}
 
-				if (EV_SYST_SETUP_ON == p_task_system_dta->event)
-				{
+				if (EV_SYST_SETUP_ON == p_task_system_dta->event) {
 					put_event_task_actuator(EV_LED_XX_BLINKING_OFF, ID_BUZZER);
 					p_task_system_dta->state = ST_SYST_SETUP;
 					p_task_system_dta->speed = DEL_SYST_INIT_SPEED;
@@ -204,9 +196,15 @@ void task_system_update(void *parameters)
 
 			case ST_SYST_CTRL:
 
+				float temperature = ADC_Temperature();
+				if(temperature == ERROR) {
+					LOGGER_LOG("ERROR TEMPERATURE");
+					return;
+				}
+
 				displayCharPositionWrite(0, 0);
 				char str1[20];
-				// snprintf(str1, sizeof(str1), "S:%i P:%i T:%i°C", p_task_system_dta->speed, p_task_system_dta->qty_packs, );
+				snprintf(str1, sizeof(str1), "S:%i P:%i T:%.1f°", (int)p_task_system_dta->speed, (int)p_task_system_dta->qty_packs, temperature);
 				displayStringWrite(str1);
 
 				displayCharPositionWrite(1, 0);
@@ -215,58 +213,51 @@ void task_system_update(void *parameters)
 				displayStringWrite(str2);
 
 				if (p_task_system_dta->qty_packs == DEL_SYST_MIN)
-				{
 					put_event_task_actuator(EV_LED_XX_TURN_ON, ID_LED_MIN_SPEED);
-				}
+
 
 				if (p_task_system_dta->qty_packs == DEL_SYST_MAX_PACKS)
-				{
 					put_event_task_actuator(EV_LED_XX_TURN_ON, ID_LED_MAX_SPEED);
-				}
+
 
 				if (EV_SYST_PACK_IN == p_task_system_dta->event && p_task_system_dta->qty_packs < DEL_SYST_MAX_PACKS)
-				{
 					p_task_system_dta->qty_packs++;
-				}
 
-				if (EV_SYST_PACK_IN == p_task_system_dta->event && (p_task_system_dta->qty_packs % p_task_system_dta->pack_rate) == 0 && p_task_system_dta->speed > DEL_SYST_MIN_SPEED && p_task_system_dta->qty_packs < DEL_SYST_MAX_PACKS)
-				{
+
+				if (EV_SYST_PACK_IN == p_task_system_dta->event && (p_task_system_dta->qty_packs % p_task_system_dta->pack_rate) == 0
+						&& p_task_system_dta->speed > DEL_SYST_MIN_SPEED && p_task_system_dta->qty_packs < DEL_SYST_MAX_PACKS) {
 					p_task_system_dta->speed--;
 					put_event_task_actuator(EV_LED_XX_TURN_OFF, ID_LED_MAX_SPEED);
 					p_task_system_dta->qty_packs++;
 				}
 
-				if (EV_SYST_NO_PACKS == p_task_system_dta->event && p_task_system_dta->tick == p_task_system_dta->waiting_time && p_task_system_dta->qty_packs == DEL_SYST_MIN)
-				{
+				if (EV_SYST_NO_PACKS == p_task_system_dta->event && p_task_system_dta->tick == p_task_system_dta->waiting_time
+						&& p_task_system_dta->qty_packs == DEL_SYST_MIN) {
 					put_event_task_actuator(EV_LED_XX_BLINKING_ON, ID_BUZZER);
 					put_event_task_system(EV_SYST_CTRL_OFF);
 				}
 
 				if (EV_SYST_NO_PACKS == p_task_system_dta->event && p_task_system_dta->qty_packs == DEL_SYST_MIN)
-				{
 					p_task_system_dta->tick++;
-				}
+
 
 				if (EV_SYST_PACK_OUT == p_task_system_dta->event && p_task_system_dta->qty_packs > DEL_SYST_MIN)
-				{
 					p_task_system_dta->qty_packs--;
-				}
 
-				if (EV_SYST_PACK_OUT == p_task_system_dta->event && (p_task_system_dta->qty_packs % p_task_system_dta->pack_rate) == 0 && p_task_system_dta->speed < DEL_SYST_MAX_SPEED && p_task_system_dta->qty_packs > DEL_SYST_MIN)
-				{
+
+				if (EV_SYST_PACK_OUT == p_task_system_dta->event && (p_task_system_dta->qty_packs % p_task_system_dta->pack_rate) == 0
+						&& p_task_system_dta->speed < DEL_SYST_MAX_SPEED && p_task_system_dta->qty_packs > DEL_SYST_MIN) {
 					p_task_system_dta->speed++;
 					put_event_task_actuator(EV_LED_XX_TURN_OFF, ID_LED_MIN_SPEED);
 					p_task_system_dta->qty_packs--;
 				}
 
-				if (EV_SYST_SETUP_ON == p_task_system_dta->event)
-				{
+				if (EV_SYST_SETUP_ON == p_task_system_dta->event) {
 					p_task_system_dta->state = ST_SYST_SETUP;
 					p_task_system_dta->option = DEL_SYST_INIT_OPTION;
 				}
 
-				if (EV_SYST_CTRL_OFF == p_task_system_dta->event)
-				{
+				if (EV_SYST_CTRL_OFF == p_task_system_dta->event) {
 					p_task_system_dta->state = ST_SYST_IDLE;
 					p_task_system_dta->qty_packs = DEL_SYST_MIN;
 					p_task_system_dta->speed = DEL_SYST_MIN;
@@ -287,29 +278,25 @@ void task_system_update(void *parameters)
 						displayStringWrite("PACKS-TIME (1-2)");
 						displayCharPositionWrite(0, 1);
 						char str_option[20];
-						snprintf(str_option, sizeof(str_option), "OPTION: %i         ", (int)p_task_system_dta->option);
+						snprintf(str_option, sizeof(str_option), "OPTION: %i       ", (int)p_task_system_dta->option);
 						displayStringWrite(str_option);
 
-						if (EV_SETUP_NEXT == p_task_system_dta->event && p_task_system_dta->option == 1)
-						{
+						if (EV_SETUP_NEXT == p_task_system_dta->event && p_task_system_dta->option == 1) {
 							p_task_system_dta->option = 2;
 							break;
 						}
 
-						if (EV_SETUP_NEXT == p_task_system_dta->event && p_task_system_dta->option == 2)
-						{
+						if (EV_SETUP_NEXT == p_task_system_dta->event && p_task_system_dta->option == 2) {
 							p_task_system_dta->option = 1;
 							break;
 						}
 
-						if (EV_SETUP_ENTER == p_task_system_dta->event && p_task_system_dta->option == 1)
-						{
+						if (EV_SETUP_ENTER == p_task_system_dta->event && p_task_system_dta->option == 1) {
 							p_task_system_dta->composed_state = ST_SETUP_MENU_PACKS_LIM;
 							break;
 						}
 
-						if (EV_SETUP_ENTER == p_task_system_dta->event && p_task_system_dta->option == 2)
-						{
+						if (EV_SETUP_ENTER == p_task_system_dta->event && p_task_system_dta->option == 2) {
 							p_task_system_dta->composed_state = ST_SETUP_MENU_WAITING_TIME;
 							break;
 						}
@@ -326,17 +313,14 @@ void task_system_update(void *parameters)
 						displayStringWrite(str_pack_rate);
 
 						if (EV_SETUP_NEXT == p_task_system_dta->event && p_task_system_dta->pack_rate < DEL_SYST_MAX_PACKS)
-						{
 							p_task_system_dta->pack_rate++;
-						}
+
 
 						if (EV_SETUP_NEXT == p_task_system_dta->event && p_task_system_dta->pack_rate == DEL_SYST_MAX_PACKS)
-						{
 							p_task_system_dta->pack_rate = 1;
-						}
 
-						if (EV_SETUP_ESCAPE == p_task_system_dta->event)
-						{
+
+						if (EV_SETUP_ESCAPE == p_task_system_dta->event) {
 							p_task_system_dta->composed_state = ST_SETUP_INIT_MENU;
 							p_task_system_dta->option = 1;
 						}
@@ -349,18 +333,16 @@ void task_system_update(void *parameters)
 						displayStringWrite("SET WAITING TIME");
 						displayCharPositionWrite(0, 1);
 						char str_waiting_time[20];
-						snprintf(str_waiting_time, sizeof(str_waiting_time), "WAIT TIME: %i   ", (int)p_task_system_dta->pack_rate);
+						snprintf(str_waiting_time, sizeof(str_waiting_time), "WAITING TIME: %i", (int)p_task_system_dta->pack_rate);
 						displayStringWrite(str_waiting_time);
 
 						if (EV_SETUP_NEXT == p_task_system_dta->event)
-						{
 							p_task_system_dta->waiting_time++;
-						}
+
 
 						if (EV_SETUP_NEXT == p_task_system_dta->event && p_task_system_dta->waiting_time == DEL_SYST_MAX_WAITING_TIME)
-						{
 							p_task_system_dta->waiting_time = DEL_SYST_MIN_WAITING_TIME;
-						}
+
 
 						break;
 				}

@@ -37,6 +37,7 @@
  */
 
 /********************** inclusions *******************************************/
+
 /* Project includes. */
 #include "main.h"
 
@@ -51,6 +52,7 @@
 #include "task_actuator_interface.h"
 
 /********************** macros and definitions *******************************/
+
 #define G_TASK_ACT_CNT_INIT			0ul
 #define G_TASK_ACT_TICK_CNT_INI		0ul
 
@@ -58,16 +60,14 @@
 #define DEL_LED_XX_BLI				300ul
 
 /********************** internal data declaration ****************************/
+
 const task_actuator_cfg_t task_actuator_cfg_list[] = {
 	{ID_LED_MAX_SPEED,  LED_MAX_SPEED_PORT,  LED_MAX_SPEED_PIN, LED_MAX_SPEED_ON,  LED_MAX_SPEED_OFF,
 	 DEL_LED_XX_BLI},
-
 	{ID_LED_MIN_SPEED,  LED_MIN_SPEED_PORT,  LED_MIN_SPEED_PIN, LED_MIN_SPEED_ON,  LED_MIN_SPEED_OFF,
 	 DEL_LED_XX_BLI},
-
 	{ID_LED_CTRL_SYST,  LED_CTRL_SYST_PORT,  LED_CTRL_SYST_PIN, LED_CTRL_SYST_ON,  LED_CTRL_SYST_OFF,
 	 DEL_LED_XX_BLI},
-
 	{ID_BUZZER,  BUZZER_PORT,  BUZZER_PIN, BUZZER_ON,  BUZZER_OFF,
 	 DEL_LED_XX_BLI}
 };
@@ -86,16 +86,18 @@ task_actuator_dta_t task_actuator_dta_list[] = {
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
+
 const char *p_task_actuator 		= "Task Actuator (Actuator Statechart)";
 const char *p_task_actuator_ 		= "Non-Blocking & Update By Time Code";
 
 /********************** external data declaration ****************************/
+
 uint32_t g_task_actuator_cnt;
 volatile uint32_t g_task_actuator_tick_cnt;
 
 /********************** external functions definition ************************/
-void task_actuator_init(void *parameters)
-{
+
+void task_actuator_init(void *parameters) {
 	uint32_t index;
 	const task_actuator_cfg_t *p_task_actuator_cfg;
 	task_actuator_dta_t *p_task_actuator_dta;
@@ -136,8 +138,7 @@ void task_actuator_init(void *parameters)
 	g_task_actuator_tick_cnt = G_TASK_ACT_TICK_CNT_INI;
 }
 
-void task_actuator_update(void *parameters)
-{
+void task_actuator_update(void *parameters) {
 	uint32_t index;
 	const task_actuator_cfg_t *p_task_actuator_cfg;
 	task_actuator_dta_t *p_task_actuator_dta;
@@ -148,47 +149,40 @@ void task_actuator_update(void *parameters)
 
 	/* Protect shared resource (g_task_actuator_tick_cnt) */
 	__asm("CPSID i");	/* disable interrupts*/
-    if (G_TASK_ACT_TICK_CNT_INI < g_task_actuator_tick_cnt)
-    {
+    if (G_TASK_ACT_TICK_CNT_INI < g_task_actuator_tick_cnt) {
     	g_task_actuator_tick_cnt--;
     	b_time_update_required = true;
     }
     __asm("CPSIE i");	/* enable interrupts*/
 
-    while (b_time_update_required)
-    {
+    while (b_time_update_required) {
 		/* Protect shared resource (g_task_actuator_tick_cnt) */
 		__asm("CPSID i");	/* disable interrupts*/
-		if (G_TASK_ACT_TICK_CNT_INI < g_task_actuator_tick_cnt)
-		{
+		if (G_TASK_ACT_TICK_CNT_INI < g_task_actuator_tick_cnt) {
 			g_task_actuator_tick_cnt--;
 			b_time_update_required = true;
 		}
-		else
-		{
+		else {
 			b_time_update_required = false;
 		}
 		__asm("CPSIE i");	/* enable interrupts*/
 
-    	for (index = 0; ACTUATOR_DTA_QTY > index; index++)
-		{
+    	for (index = 0; ACTUATOR_DTA_QTY > index; index++) {
     		/* Update Task Actuator Configuration & Data Pointer */
 			p_task_actuator_cfg = &task_actuator_cfg_list[index];
 			p_task_actuator_dta = &task_actuator_dta_list[index];
 
-			switch (p_task_actuator_dta->state)
-			{
+			switch (p_task_actuator_dta->state) {
+
 				case ST_LED_XX_OFF:
 
-					if (EV_LED_XX_TURN_ON == p_task_actuator_dta->event)
-					{
+					if (EV_LED_XX_TURN_ON == p_task_actuator_dta->event) {
 						p_task_actuator_dta->flag = true;
 						HAL_GPIO_WritePin(p_task_actuator_cfg->gpio_port, p_task_actuator_cfg->pin, p_task_actuator_cfg->led_on);
 						p_task_actuator_dta->state = ST_LED_XX_ON;
 					}
 
-					if (EV_LED_XX_BLINKING_ON == p_task_actuator_dta->event)
-					{
+					if (EV_LED_XX_BLINKING_ON == p_task_actuator_dta->event) {
 						p_task_actuator_dta->flag = true;
 						p_task_actuator_dta->tick = DEL_LED_XX_BLI;
 						HAL_GPIO_WritePin(p_task_actuator_cfg->gpio_port, p_task_actuator_cfg->pin, p_task_actuator_cfg->led_on);
@@ -199,8 +193,7 @@ void task_actuator_update(void *parameters)
 
 				case ST_LED_XX_ON:
 
-					if (EV_LED_XX_TURN_OFF == p_task_actuator_dta->event)
-					{
+					if (EV_LED_XX_TURN_OFF == p_task_actuator_dta->event) {
 						p_task_actuator_dta->flag = false;
 						HAL_GPIO_WritePin(p_task_actuator_cfg->gpio_port, p_task_actuator_cfg->pin, p_task_actuator_cfg->led_off);
 						p_task_actuator_dta->state = ST_LED_XX_OFF;
@@ -211,27 +204,21 @@ void task_actuator_update(void *parameters)
 				case ST_LED_XX_BLINK:
 
 					if (p_task_actuator_dta->tick > 0)
-					{
 						p_task_actuator_dta->tick--;
-					}
 
-					if (p_task_actuator_dta->tick <= 0 && p_task_actuator_dta->flag == false)
-					{
+					if (p_task_actuator_dta->tick <= 0 && p_task_actuator_dta->flag == false) {
 						p_task_actuator_dta->tick = DEL_LED_XX_BLI;
 						p_task_actuator_dta->flag = true;
 						HAL_GPIO_WritePin(p_task_actuator_cfg->gpio_port, p_task_actuator_cfg->pin, p_task_actuator_cfg->led_on);
-
 					}
 
-					if (p_task_actuator_dta->tick <= 0 && p_task_actuator_dta->flag == true)
-					{
+					if (p_task_actuator_dta->tick <= 0 && p_task_actuator_dta->flag == true) {
 						p_task_actuator_dta->tick = DEL_LED_XX_BLI;
 						p_task_actuator_dta->flag = false;
 						HAL_GPIO_WritePin(p_task_actuator_cfg->gpio_port, p_task_actuator_cfg->pin, p_task_actuator_cfg->led_off);
 					}
 
-					if (EV_LED_XX_BLINKING_OFF == p_task_actuator_dta->event)
-					{
+					if (EV_LED_XX_BLINKING_OFF == p_task_actuator_dta->event) {
 						p_task_actuator_dta->tick = 0;
 						p_task_actuator_dta->flag = false;
 						HAL_GPIO_WritePin(p_task_actuator_cfg->gpio_port, p_task_actuator_cfg->pin, p_task_actuator_cfg->led_off);

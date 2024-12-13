@@ -2,48 +2,49 @@
 #include "main.h"
 
 
-/* App includes. */
+/* Demo includes. */
 #include "logger.h"
+#include "dwt.h"
 
-/* Application includes. */
-
+/* Application & Tasks includes. */
+#include "app.h"
+#include "task_temperature.h"
 
 /********************** macros and definitions *******************************/
 
-#define SAMPLES_COUNTER (100)
-#define AVERAGER_SIZE (16)
+/********************** internal functions declaration ***********************/
+
+HAL_StatusTypeDef ADC_Poll_Read(uint16_t *value);
 
 /********************** external data declaration *****************************/
 
 extern ADC_HandleTypeDef hadc1;
 
-/********************** external functions definition ************************/
+/********************** external functions declaration ***********************/
 
-
-
-/********************** internal data declaration ****************************/
-uint32_t tickstart;
-uint16_t sample_idx;
-
-/********************** internal data definition *****************************/
-
-/********************** internal functions definitions ***********************/
-bool test1_tick();
-bool test2_tick();
-bool test3_tick();
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc);
-HAL_StatusTypeDef ADC_Poll_Read(uint16_t *value);
-
-/********************** internal functions declaration ***********************/
-
-
-
-void app_init(void)
+float ADC_Temperature()
 {
-	sample_idx = 0;
-	LOGGER_LOG ("Test #%u starts\n", TEST_NUMBER);
-	tickstart = HAL_GetTick();
+	uint16_t value;
+
+	if (HAL_OK == ADC_Poll_Read(&value)) {
+		float voltage = (value * 5) / 4096.0;
+    	float temperature = voltage * 100;
+    	return temperature;
+	}
+
+	LOGGER_LOG("ERROR TEMPERATURE");
+	return ERROR;
 }
+
+/*
+float ADC_Temperature(uint16_t value)
+{
+	float temperature = 2 + value * 100;
+
+	return temperature;
+}*/
+
+/********************** internal functions definition ************************/
 
 //	Requests start of conversion, waits until conversion done
 HAL_StatusTypeDef ADC_Poll_Read(uint16_t *value)
@@ -59,33 +60,5 @@ HAL_StatusTypeDef ADC_Poll_Read(uint16_t *value)
 	}
 	return res;
 }
-
-float ADC_Temperature(uint16_t value)
-{
-    float voltage = (value * 3.3) / 4096.0;
-    float temperature = voltage * 100;
-    return temperature;
-}
-
-
-/*
-float ADC_Temperature(uint16_t value)
-{
-	float temperature = 2 + value * 100;
-
-	return temperature;
-}*/
-
-
-
-
-
-
-
-
-
-
-
-
 
 /********************** end of file ******************************************/

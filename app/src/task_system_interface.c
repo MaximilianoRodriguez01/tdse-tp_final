@@ -37,6 +37,7 @@
  */
 
 /********************** inclusions *******************************************/
+
 /* Project includes. */
 #include "main.h"
 
@@ -50,6 +51,7 @@
 #include "task_system_attribute.h"
 
 /********************** macros and definitions *******************************/
+
 #define EVENT_UNDEFINED	(255)
 #define MAX_EVENTS		(16)
 
@@ -58,6 +60,7 @@
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
+
 struct
 {
 	uint32_t	head;
@@ -69,8 +72,8 @@ struct
 /********************** external data declaration ****************************/
 
 /********************** external functions definition ************************/
-void init_queue_event_task_system(void)
-{
+
+void init_queue_event_task_system(void) {
 	uint32_t i;
 
 	queue_task_a.head = 0;
@@ -81,8 +84,7 @@ void init_queue_event_task_system(void)
 		queue_task_a.queue[i] = EVENT_UNDEFINED;
 }
 
-void put_event_task_system(task_system_ev_t event)
-{
+void put_event_task_system(task_system_ev_t event) {
 	queue_task_a.count++;
 	queue_task_a.queue[queue_task_a.head++] = event;
 
@@ -90,9 +92,7 @@ void put_event_task_system(task_system_ev_t event)
 		queue_task_a.head = 0;
 }
 
-task_system_ev_t get_event_task_system(void)
-
-{
+task_system_ev_t get_event_task_system(void) {
 	task_system_ev_t event;
 
 	queue_task_a.count--;
@@ -105,8 +105,7 @@ task_system_ev_t get_event_task_system(void)
 	return event;
 }
 
-bool any_event_task_system(void)
-{
+bool any_event_task_system(void) {
   return (queue_task_a.head != queue_task_a.tail);
 }
 

@@ -1,4 +1,5 @@
 /********************** inclusions *******************************************/
+
 #include "display.h"
 #include "main.h"
 #include <stdbool.h>
@@ -22,6 +23,7 @@
 #endif
 
 /********************** macros and definitions *******************************/
+
 #define DISPLAY_IR_CLEAR_DISPLAY   0b00000001
 #define DISPLAY_IR_ENTRY_MODE_SET  0b00000100
 #define DISPLAY_IR_DISPLAY_CONTROL 0b00001000
@@ -66,6 +68,7 @@ static display_t display;
 static bool initial8BitCommunicationIsCompleted;
 
 /********************** internal functions declaration ***********************/
+
 static void displayPinWrite( uint8_t pinName, int value );
 static void displayDataBusWrite( uint8_t dataByte );
 static void displayCodeWrite( bool type, uint8_t dataBus );
