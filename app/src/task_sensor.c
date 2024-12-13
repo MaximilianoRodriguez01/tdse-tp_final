@@ -110,8 +110,7 @@ volatile uint32_t g_task_sensor_tick_cnt;
 
 /********************** external functions definition ************************/
 
-void task_sensor_init(void *parameters)
-{
+void task_sensor_init(void *parameters) {
 	uint32_t index;
 	task_sensor_dta_t *p_task_sensor_dta;
 	task_sensor_st_t state;

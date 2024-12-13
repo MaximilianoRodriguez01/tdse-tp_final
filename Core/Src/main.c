@@ -78,7 +78,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-	initialise_monitor_handles();
+  initialise_monitor_handles();
 
   /* USER CODE END 1 */
 
@@ -104,8 +104,8 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
-	/* Application Init */
-	app_init();
+  /* Application Init */
+  app_init();
 
   /* USER CODE END 2 */
 

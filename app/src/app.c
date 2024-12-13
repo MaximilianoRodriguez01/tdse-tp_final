@@ -48,6 +48,7 @@
 #include "task_system.h"
 #include "task_actuator.h"
 #include "task_sensor.h"
+#include "task_temperature.h"
 
 /********************** macros and definitions *******************************/
 #define G_APP_CNT_INI		0ul
@@ -80,10 +81,12 @@ task_cfg_t task_cfg_list[]	= {
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
+
 const char *p_sys	= " Bare Metal - Event-Triggered Systems (ETS)\r\n";
 const char *p_app	= " App - Model Integration\r\n";
 
 /********************** external data declaration ****************************/
+
 uint32_t g_app_cnt;
 uint32_t g_app_time_us;
 
@@ -92,6 +95,7 @@ volatile uint32_t g_app_tick_cnt;
 task_dta_t task_dta_list[TASK_QTY];
 
 /********************** external functions definition ************************/
+
 void app_init(void)
 {
 	uint32_t index;
@@ -109,8 +113,7 @@ void app_init(void)
 	LOGGER_LOG(" %s = %d\r\n", GET_NAME(g_app_cnt), (int)g_app_cnt);
 
 	/* Go through the task arrays */
-	for (index = 0; TASK_QTY > index; index++)
-	{
+	for (index = 0; TASK_QTY > index; index++) {
 		/* Run task_x_init */
 		(*task_cfg_list[index].task_init)(task_cfg_list[index].parameters);
 
@@ -124,12 +127,14 @@ void app_init(void)
 void app_update(void)
 {
 	uint32_t index;
-	uint32_t cycle_counter;
 	uint32_t cycle_counter_time_us;
 
 	/* Check if it's time to run tasks */
 	if (G_APP_TICK_CNT_INI < g_app_tick_cnt)
     {
+		float temperature = ADC_Temperature();
+		printf("Temperature: %.2f °C\n", temperature);
+
     	g_app_tick_cnt--;
 
     	/* Update App Counter */

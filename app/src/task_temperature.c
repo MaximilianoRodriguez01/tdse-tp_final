@@ -27,8 +27,7 @@ float ADC_Temperature()
 	uint16_t value;
 
 	if (HAL_OK == ADC_Poll_Read(&value)) {
-		float voltage = (value * 5) / 4096.0;
-    	float temperature = voltage * 100;
+		float temperature = ((float)value * 5.0 * 100.0) / 4095.0;
     	return temperature;
 	}
 
