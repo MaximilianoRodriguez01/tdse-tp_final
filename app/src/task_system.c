@@ -124,6 +124,8 @@ void task_system_init(void *parameters)
 	LOGGER_LOG("   %s = %s\r\n", GET_NAME(b_event), (b_event ? "true" : "false"));
 
 	g_task_system_tick_cnt = G_TASK_SYS_TICK_CNT_INI;
+
+	displayInit();
 }
 
 void task_system_update(void *parameters)
@@ -302,7 +304,7 @@ void task_system_update(void *parameters)
 
 						if (EV_SETUP_ENTER == p_task_system_dta->event && p_task_system_dta->option == 1)
 						{
-							p_task_system_dta->composed_state = ST_SETUP_MENU_pack_rate;
+							p_task_system_dta->composed_state = ST_SETUP_MENU_PACKS_LIM;
 							break;
 						}
 
@@ -314,7 +316,7 @@ void task_system_update(void *parameters)
 
 						break;
 
-					case ST_SETUP_MENU_pack_rate:
+					case ST_SETUP_MENU_PACKS_LIM:
 
 						displayCharPositionWrite(0, 0);
 						displayStringWrite("SET PACK RATE   ");
