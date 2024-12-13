@@ -127,6 +127,7 @@ void app_init(void)
 void app_update(void)
 {
 	uint32_t index;
+	uint32_t cycle_counter;
 	uint32_t cycle_counter_time_us;
 
 	/* Check if it's time to run tasks */
