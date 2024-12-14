@@ -133,9 +133,9 @@ void app_update(void)
 	/* Check if it's time to run tasks */
 	if (G_APP_TICK_CNT_INI < g_app_tick_cnt)
     {
-		float ext_temp = ADC_Temperature();
+		// float ext_temp = ADC_Temperature();
 		// float int_temp = ADC_Int_Temperature();
-		printf("Temperature EXT: %.2f °C\n", ext_temp);
+		// printf("Temperature EXT: %.2f °C\n", ext_temp);
 
     	g_app_tick_cnt--;
 
