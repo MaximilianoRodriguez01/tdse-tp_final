@@ -12,6 +12,9 @@
 
 /********************** macros and definitions *******************************/
 
+#define AVG_SLOPE 4.3
+#define V25 1.43
+
 /********************** internal functions declaration ***********************/
 
 HAL_StatusTypeDef ADC_Poll_Read(uint16_t *value);
@@ -22,17 +25,45 @@ extern ADC_HandleTypeDef hadc1;
 
 /********************** external functions declaration ***********************/
 
-float ADC_Temperature()
+void ADC_Int_Temperature(float *temperature)
 {
-	uint16_t value;
+    uint16_t value;
+    ADC_ChannelConfTypeDef sConfig = {0};
 
-	if (HAL_OK == ADC_Poll_Read(&value)) {
-		float temperature = ((float)value * 5.0 * 100.0) / 4095.0;
-    	return temperature;
-	}
+    sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+    sConfig.Rank = ADC_REGULAR_RANK_1;
+    sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
 
-	LOGGER_LOG("ERROR TEMPERATURE");
-	return ERROR;
+    if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
+    	Error_Handler();
+    }
+
+    if (HAL_OK == ADC_Poll_Read(&value)) {
+    	float delta_v = (((float)value * 3.3 / 4096.0) - V25);
+        *temperature =  (delta_v / AVG_SLOPE) + 25.0;
+    }
+
+    Error_Handler();
+}
+
+void ADC_Ext_Temperature(float *temperature)
+{
+    uint16_t value;
+    ADC_ChannelConfTypeDef sConfig = {0};
+
+    sConfig.Channel = ADC_CHANNEL_0;
+    sConfig.Rank = ADC_REGULAR_RANK_1;
+    sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+
+    if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
+    	Error_Handler();
+    }
+
+    if (HAL_OK == ADC_Poll_Read(&value)) {
+        *temperature = ((float)value * 3.3 / 4096.0) * 100.0;
+    }
+
+    Error_Handler();
 }
 
 /*
