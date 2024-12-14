@@ -198,10 +198,8 @@ void task_system_update(void *parameters) {
 
 			case ST_SYST_CTRL:
 
-				float ext_temp= 0;
-				ADC_Ext_Temperature(&ext_temp);
-				float int_temp= 0;
-				ADC_Int_Temperature(&int_temp);
+				float ext_temp = ADC_Ext_Temperature();
+				float int_temp = ADC_Int_Temperature();
 
 				displayCharPositionWrite(0, 0);
 				char str1[20];

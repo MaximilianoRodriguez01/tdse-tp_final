@@ -25,7 +25,7 @@ extern ADC_HandleTypeDef hadc1;
 
 /********************** external functions declaration ***********************/
 
-void ADC_Int_Temperature(float *temperature)
+float ADC_Int_Temperature(void)
 {
     uint16_t value;
     ADC_ChannelConfTypeDef sConfig = {0};
@@ -36,17 +36,22 @@ void ADC_Int_Temperature(float *temperature)
 
     if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
     	Error_Handler();
+    	LOGGER_LOG("ERROR CONFIG CANAL TEMP INT");
+    	return ERROR;
     }
 
     if (HAL_OK == ADC_Poll_Read(&value)) {
     	float delta_v = (((float)value * 3.3 / 4096.0) - V25);
-        *temperature =  (delta_v / AVG_SLOPE) + 25.0;
+        float temperature =  (delta_v / AVG_SLOPE) + 25.0;
+        return temperature;
     }
 
     Error_Handler();
+    LOGGER_LOG("ERROR CONFIG LEYENDO TEMP INT");
+    return ERROR;
 }
 
-void ADC_Ext_Temperature(float *temperature)
+float ADC_Ext_Temperature(void)
 {
     uint16_t value;
     ADC_ChannelConfTypeDef sConfig = {0};
@@ -57,13 +62,18 @@ void ADC_Ext_Temperature(float *temperature)
 
     if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
     	Error_Handler();
+    	LOGGER_LOG("ERROR CONFIG CANAL TEMP EXT");
+    	return ERROR;
     }
 
     if (HAL_OK == ADC_Poll_Read(&value)) {
-        *temperature = ((float)value * 3.3 / 4096.0) * 100.0;
+        float temperature = ((float)value * 3.3 / 4096.0) * 100.0;
+        return temperature;
     }
 
     Error_Handler();
+    LOGGER_LOG("ERROR CONFIG LEYENDO TEMP EXT");
+    return ERROR;
 }
 
 /*
