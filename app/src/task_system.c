@@ -198,8 +198,8 @@ void task_system_update(void *parameters) {
 
 			case ST_SYST_CTRL:
 
-				float ext_temp = ADC_Ext_Temperature();
-				float int_temp = ADC_Int_Temperature();
+				float ext_temp = ADC_Temperature();
+				//float int_temp = ADC_Int_Temperature();
 
 				displayCharPositionWrite(0, 0);
 				char str1[20];
@@ -208,7 +208,7 @@ void task_system_update(void *parameters) {
 
 				displayCharPositionWrite(0, 1);
 				char str2[20];
-				snprintf(str2, sizeof(str2), "T:%i R:%i TE:%.1f", (int)p_task_system_dta->waiting_time, (int)p_task_system_dta->pack_rate, int_temp);
+				snprintf(str2, sizeof(str2), "T:%i R:%i", (int)p_task_system_dta->waiting_time, (int)p_task_system_dta->pack_rate);
 				displayStringWrite(str2);
 
 				if (p_task_system_dta->qty_packs == DEL_SYST_MIN)

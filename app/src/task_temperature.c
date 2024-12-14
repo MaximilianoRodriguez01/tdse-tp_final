@@ -12,9 +12,6 @@
 
 /********************** macros and definitions *******************************/
 
-#define AVG_SLOPE 4.3
-#define V25 1.43
-
 /********************** internal functions declaration ***********************/
 
 HAL_StatusTypeDef ADC_Poll_Read(uint16_t *value);
@@ -25,55 +22,17 @@ extern ADC_HandleTypeDef hadc1;
 
 /********************** external functions declaration ***********************/
 
-float ADC_Int_Temperature(void)
+float ADC_Temperature()
 {
-    uint16_t value;
-    ADC_ChannelConfTypeDef sConfig = {0};
+	uint16_t value;
 
-    sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
-    sConfig.Rank = ADC_REGULAR_RANK_1;
-    sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
+	if (HAL_OK == ADC_Poll_Read(&value)) {
+		float temperature = ((float)value * 3.3 * 100.0) / 4096.0;
+    	return temperature;
+	}
 
-    if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
-    	Error_Handler();
-    	LOGGER_LOG("ERROR CONFIG CANAL TEMP INT");
-    	return ERROR;
-    }
-
-    if (HAL_OK == ADC_Poll_Read(&value)) {
-    	float delta_v = (((float)value * 3.3 / 4096.0) - V25);
-        float temperature =  (delta_v / AVG_SLOPE) + 25.0;
-        return temperature;
-    }
-
-    Error_Handler();
-    LOGGER_LOG("ERROR CONFIG LEYENDO TEMP INT");
-    return ERROR;
-}
-
-float ADC_Ext_Temperature(void)
-{
-    uint16_t value;
-    ADC_ChannelConfTypeDef sConfig = {0};
-
-    sConfig.Channel = ADC_CHANNEL_0;
-    sConfig.Rank = ADC_REGULAR_RANK_1;
-    sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
-
-    if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) {
-    	Error_Handler();
-    	LOGGER_LOG("ERROR CONFIG CANAL TEMP EXT");
-    	return ERROR;
-    }
-
-    if (HAL_OK == ADC_Poll_Read(&value)) {
-        float temperature = ((float)value * 3.3 / 4096.0) * 100.0;
-        return temperature;
-    }
-
-    Error_Handler();
-    LOGGER_LOG("ERROR CONFIG LEYENDO TEMP EXT");
-    return ERROR;
+	LOGGER_LOG("ERROR TEMPERATURE");
+	return ERROR;
 }
 
 /*

@@ -207,7 +207,6 @@ static void MX_ADC1_Init(void)
   sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
-	LOGGER_LOG("ERROR ADC");
     Error_Handler();
   }
   /* USER CODE BEGIN ADC1_Init 2 */
