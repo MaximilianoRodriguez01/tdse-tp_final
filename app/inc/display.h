@@ -14,7 +14,9 @@ extern "C" {
 
 /********************** external data declaration ****************************/
 typedef enum {
-     DISPLAY_CONNECTION_GPIO_4BITS
+     DISPLAY_CONNECTION_GPIO_4BITS,
+     DISPLAY_CONNECTION_GPIO_8BITS,
+     DISPLAY_CONNECTION_I2C_PCF8574_IO_EXPANDER,
 } displayConnection_t;
 
 typedef struct {
@@ -22,7 +24,7 @@ typedef struct {
 } display_t;
 
 /********************** external functions declaration ***********************/
-void displayInit( );
+void displayInit( displayConnection_t connection );
 
 void displayCharPositionWrite( uint8_t charPositionX, uint8_t charPositionY );
 
